@@ -1,0 +1,28 @@
+<?php
+
+namespace spkm\Jamf\Classic\Requests\MobileDeviceApplications;
+
+use spkm\Jamf\Classic\Requests\ClassicGetRequest;
+use spkm\Jamf\Support\Path;
+
+/**
+ * Finds mobile device applications by bundle ID: GET /mobiledeviceapplications/bundleid/{bundleid}.
+ *
+ * You can also PUT and DELETE using this resource URL. If multiple applications match, no application is returned.
+ * You may specify both bundle id and version to uniquely identify a mobile device application.
+ */
+class FindMobileDeviceApplicationsByBundleIDRequest extends ClassicGetRequest
+{
+    /**
+     * @param  array<string, mixed>  $options  Query options.
+     */
+    public function __construct(protected string $bundleid, array $options = [])
+    {
+        $this->options = $options;
+    }
+
+    public function resolveEndpoint(): string
+    {
+        return '/mobiledeviceapplications/bundleid/'.Path::segment((string) $this->bundleid);
+    }
+}

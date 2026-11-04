@@ -1,0 +1,32 @@
+<?php
+
+namespace spkm\Jamf\Pro\Requests\MobileDevicePrestages;
+
+use spkm\Jamf\Pro\Data\FileAttachmentV2;
+use spkm\Jamf\Requests\GetRequest;
+use spkm\Jamf\Support\Path;
+
+/**
+ * Get attachments for a Mobile Device Prestage: GET /v2/mobile-device-prestages/{id}/attachments.
+ *
+ * @deprecated Jamf deprecated this endpoint on 2025-06-30.
+ */
+class GetMobileDevicePrestageAttachmentsV2Request extends GetRequest
+{
+    protected string $responseShape = self::LIST;
+
+    protected ?string $dto = FileAttachmentV2::class;
+
+    /**
+     * @param  array<string, mixed>  $options  Query options.
+     */
+    public function __construct(protected int|string $id, array $options = [])
+    {
+        $this->options = $options;
+    }
+
+    public function resolveEndpoint(): string
+    {
+        return '/v2/mobile-device-prestages/'.Path::segment((string) $this->id).'/attachments';
+    }
+}

@@ -12,8 +12,6 @@ readonly class SsoKeystoreResponse extends Data
 {
     protected const LISTS = ['keys' => CertificateKey::class];
 
-    protected const HIDDEN = ['keystoreFileName'];
-
     /**
      * @param  Collection<int, CertificateKey>|null  $keys
      * @param  array<string, mixed>  $extra  Fields Jamf sent that the model has no property for.

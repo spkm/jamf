@@ -20,7 +20,7 @@ $device = Jamf::mobileDevices()->find(61);                                  // M
 $iPads = Jamf::mobileDevices()
     ->getMobileDevicesDetailV2()
     ->sections(['GENERAL', 'HARDWARE', 'USER_AND_LOCATION'])
-    ->where('hardware.serialNumber', 'DMP*')
+    ->where('serialNumber', 'DMP*')
     ->orderBy('displayName')
     ->lazy(2000);                                                           // MobileDeviceResponse, 2000 a page
 
@@ -127,7 +127,7 @@ Jamf Pro filters, sorts and pages in the query string, and the builder writes th
 Jamf::computerInventory()
     ->sections(['GENERAL', 'HARDWARE', 'USER_AND_LOCATION'])     // section=GENERAL&section=HARDWARE&...
     ->where('general.name', 'LAB-*')                             // general.name=="LAB-*"
-    ->where('general.lastContactTime', '>', now()->subMonth())   // ...;general.lastContactTime>"2026-10-04T..."
+    ->where('general.reportDate', '>', now()->subMonth())        // ...;general.reportDate>"2026-10-04T09:30:00.000Z"
     ->whereIn('hardware.model', ['MacBook Air', 'iMac'])         // ...;hardware.model=in=("MacBook Air","iMac")
     ->orWhere('general.assetTag', 'CRAN-1')                      // (...),general.assetTag=="CRAN-1"
     ->orderByDesc('general.reportDate')                          // sort=general.reportDate:desc
@@ -148,9 +148,11 @@ Jamf::computerInventory()
 | `sections([...])` | `section`, repeated |
 | `withParameter($name, $value)` | any other parameter the endpoint documents |
 
-Nested fields take dots (`general.name`, `hardware.serialNumber`), as Jamf's documentation for each endpoint lists
-them. A string value is always quoted, with quotes and backslashes escaped, so a value from a form cannot change the
-filter's grammar; dates are sent in ISO 8601. An endpoint that doesn't take a filter, a sort or sections refuses one
+Each endpoint takes its own field names, as Jamf's documentation for it lists them: the computer inventory nests
+them (`general.name`, `hardware.serialNumber`), while the mobile device inventory doesn't (`displayName`,
+`serialNumber`). Jamf answers a field it doesn't filter on with a 400 that lists the ones it does. A string value is
+always quoted, with quotes and backslashes escaped, so a value from a form cannot change the filter's grammar; dates
+are sent in UTC as Jamf reads them (`2026-10-04T09:30:00.000Z`). An endpoint that doesn't take a filter, a sort or sections refuses one
 with a `LogicException` rather than letting Jamf ignore it and answer every record.
 
 `get()` returns the page `limit()` or `forPage()` asked for, or every match when neither was given; `first()`,

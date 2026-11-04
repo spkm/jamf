@@ -5,6 +5,8 @@ namespace spkm\Jamf\Requests;
 use JsonSerializable;
 use Saloon\Contracts\Body\HasBody;
 use Saloon\Enums\Method;
+use Saloon\Http\PendingRequest;
+use Saloon\Repositories\Body\JsonBodyRepository;
 use Saloon\Traits\Body\HasJsonBody;
 
 /**
@@ -26,6 +28,18 @@ class AdhocBodyRequest extends AdhocRequest implements HasBody
         parent::__construct($method, $path, $parameters, $shape);
 
         $this->payload = $body;
+    }
+
+    /**
+     * Sends an empty body as {}, as Jamf reads a body as an object.
+     */
+    public function boot(PendingRequest $pendingRequest): void
+    {
+        $body = $pendingRequest->body();
+
+        if ($body instanceof JsonBodyRepository && $body->isEmpty()) {
+            $body->setJsonFlags($body->getJsonFlags() | JSON_FORCE_OBJECT);
+        }
     }
 
     /**

@@ -1,5 +1,6 @@
 <?php
 
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Saloon\Contracts\Body\HasBody;
 use Saloon\Enums\Method;
@@ -13,11 +14,14 @@ use spkm\Jamf\Pro\Data\Building;
 use spkm\Jamf\Pro\Data\GsxConnection;
 use spkm\Jamf\Pro\ProConnector;
 use spkm\Jamf\Pro\Requests\ActivationCode\ExportActivationCodeHistoryV1Request;
+use spkm\Jamf\Pro\Requests\AppRequestPreview\ReplaceAppRequestFormInputFieldsV1Request;
 use spkm\Jamf\Pro\Requests\Branding\GetBrandingImagesDownloadV1Request;
 use spkm\Jamf\Pro\Requests\Buildings\CreateBuildingsV1Request;
 use spkm\Jamf\Pro\Requests\Buildings\DeleteBuildingV1Request;
+use spkm\Jamf\Pro\Requests\Buildings\ExportBuildingsV1Request;
 use spkm\Jamf\Pro\Requests\Buildings\GetBuildingV1Request;
 use spkm\Jamf\Pro\Requests\ComputerInventory\GetComputersInventoryV3Request;
+use spkm\Jamf\Pro\Requests\ComputerInventory\GetComputersInventoryV4Request;
 use spkm\Jamf\Pro\Requests\GsxConnection\UpdateGsxConnectionV1Request;
 use spkm\Jamf\Pro\Requests\MobileDevices\GetMobileDevicesV2Request;
 use spkm\Jamf\Pro\Requests\Packages\UploadPackageV1Request;
@@ -267,4 +271,29 @@ it('marks a request for an endpoint Jamf has deprecated', function () {
 
     expect($doc)->toContain('@deprecated Jamf deprecated this endpoint')
         ->and((string) (new ReflectionClass(GetBuildingV1Request::class))->getDocComment())->not->toContain('@deprecated');
+});
+
+it('sends an empty JSON body as an object, as Jamf reads a body', function () {
+    $mock = FakeJamf::respondWith([
+        ExportBuildingsV1Request::class => MockResponse::make('id,name', 200, ['Content-Type' => 'text/csv']),
+        ReplaceAppRequestFormInputFieldsV1Request::class => MockResponse::make([]),
+        AdhocBodyRequest::class => MockResponse::make([]),
+    ]);
+
+    expect(FakeJamf::connector()->buildings()->exportBuildingsV1())->toBe('id,name');
+    FakeJamf::connector()->appRequestPreview()->replaceAppRequestFormInputFieldsV1([]);
+    FakeJamf::connector()->post('/v1/things');
+
+    expect(FakeJamf::bodiesReceived($mock, ExportBuildingsV1Request::class))->toBe(['{}'])
+        ->and(FakeJamf::bodiesReceived($mock, ReplaceAppRequestFormInputFieldsV1Request::class))->toBe(['[]'])
+        ->and(FakeJamf::bodiesReceived($mock, AdhocBodyRequest::class))->toBe(['{}']);
+});
+
+it('writes a date into a filter in UTC with a Z, the form Jamf compares', function () {
+    $mock = FakeJamf::respondWith([GetComputersInventoryV4Request::class => FakeJamf::page([])]);
+
+    FakeJamf::connector()->computerInventory()->where('general.reportDate', '>', CarbonImmutable::parse('2026-10-04T10:30:00+01:00'))->limit(1)->get();
+
+    expect(FakeJamf::queriesReceived($mock, GetComputersInventoryV4Request::class))
+        ->toBe(['filter=general.reportDate>"2026-10-04T09:30:00.000Z"&page-size=1']);
 });

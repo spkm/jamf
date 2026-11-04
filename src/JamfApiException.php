@@ -92,8 +92,9 @@ class JamfApiException extends RequestException
     }
 
     /**
-     * What an HTML page says: the Classic API's "Error: ..." paragraph, else the page's title ('' when it has
-     * neither). Null when Jamf didn't send HTML.
+     * What an HTML page says: the Classic API's "Error: ..." paragraph, else its first two paragraphs (the status
+     * and what it means, such as "Unauthorized: The request requires user authentication"), else the page's title
+     * ('' when it has none). Null when Jamf didn't send HTML.
      */
     private static function htmlMessage(Response $response): ?string
     {
@@ -103,13 +104,19 @@ class JamfApiException extends RequestException
             return null;
         }
 
-        if (preg_match_all('#<p>(.*?)</p>#is', $body, $paragraphs)) {
-            foreach ($paragraphs[1] as $paragraph) {
-                $paragraph = self::clean(html_entity_decode($paragraph));
+        if (preg_match_all('#<p\b[^>]*>(.*?)</p>#is', $body, $paragraphs)) {
+            $texts = array_values(array_filter(array_map(fn (string $paragraph) => self::clean(html_entity_decode($paragraph)), $paragraphs[1])));
 
-                if (stripos($paragraph, 'error') === 0) {
-                    return rtrim(trim((string) preg_replace('/^error:?/i', '', $paragraph)), '.');
+            foreach ($texts as $text) {
+                if (stripos($text, 'error') === 0) {
+                    return rtrim(trim((string) preg_replace('/^error:?/i', '', $text)), '.');
                 }
+            }
+
+            $texts = array_filter($texts, fn (string $text) => stripos($text, 'You can get technical details') !== 0);
+
+            if ($texts !== []) {
+                return self::clean(rtrim(implode(': ', array_slice($texts, 0, 2)), '.'));
             }
         }
 

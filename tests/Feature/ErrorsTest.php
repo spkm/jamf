@@ -2,6 +2,7 @@
 
 use Saloon\Http\Faking\MockResponse;
 use spkm\Jamf\Classic\Requests\Buildings\CreateBuildingByIdRequest;
+use spkm\Jamf\Classic\Requests\Buildings\FindBuildingsRequest;
 use spkm\Jamf\Exceptions\InvalidRequestException;
 use spkm\Jamf\Exceptions\NotFoundException;
 use spkm\Jamf\Exceptions\RateLimitedException;
@@ -150,4 +151,11 @@ it('throws the mapped exception from a resource, and gives null where it finds n
     FakeJamf::respondWith([GetMobileDeviceDetailV2Request::class => FakeJamf::problem(403, 'Forbidden', code: 'FORBIDDEN')]);
 
     expect(fn () => FakeJamf::connector()->mobileDevices()->getMobileDeviceDetailV2(7))->toThrow(UnauthorizedException::class, 'Forbidden');
+});
+
+it('reads the status and its meaning from a Classic API page without an "Error:" line', function () {
+    $response = FakeJamf::send(new FindBuildingsRequest, "<html>\n<head>\n<title>Status page</title>\n</head>\n<body style=\"font-family: sans-serif;\">\n<p style=\"font-size: 1.2em;font-weight: bold;margin: 1em 0px;\">Unauthorized</p>\n<p>The request requires user authentication</p>\n<p>You can get technical details <a href=\"http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.2\">here</a>.<br>\nPlease continue your visit at our <a href=\"/\">home page</a>.\n</p>\n</body>\n</html>\n", 401, ['Content-Type' => 'text/html;charset=UTF-8']);
+
+    expect(JamfApiException::fromResponse($response)->getMessage())
+        ->toBe('Jamf responded 401 to GET /JSSResource/buildings: Unauthorized: The request requires user authentication');
 });

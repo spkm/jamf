@@ -12,7 +12,7 @@ readonly class SsoKeystoreCertParseResponse extends Data
 {
     protected const LISTS = ['keys' => CertificateKey::class];
 
-    protected const HIDDEN = ['keystoreFile', 'keystoreFileName'];
+    protected const HIDDEN = ['keystoreFile'];
 
     /**
      * @param  Collection<int, CertificateKey>|null  $keys

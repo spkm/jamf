@@ -9,7 +9,7 @@ use spkm\Jamf\Data\Data;
  */
 readonly class ComputerInventoryFileVault extends Data
 {
-    protected const HIDDEN = ['personalRecoveryKey', 'individualRecoveryKeyValidityStatus'];
+    protected const HIDDEN = ['personalRecoveryKey'];
 
     /**
      * @param  array<string, mixed>  $extra  Fields Jamf sent that the model has no property for.

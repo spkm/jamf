@@ -40,7 +40,7 @@ it('writes an enum by its value, a date in ISO 8601 with its offset, and a Strin
 
     expect(Filter::value(ExampleFilterStatus::Managed))->toBe('"MANAGED"')
         ->and(Filter::value(ExampleFilterLevel::High))->toBe('3')
-        ->and(Filter::value(CarbonImmutable::parse('2026-01-02T03:04:05+01:00')))->toBe('"2026-01-02T03:04:05+01:00"')
+        ->and(Filter::value(CarbonImmutable::parse('2026-01-02T03:04:05+01:00')))->toBe('"2026-01-02T02:04:05.000Z"')
         ->and(Filter::value($stringable))->toBe('"Lab A"');
 });
 

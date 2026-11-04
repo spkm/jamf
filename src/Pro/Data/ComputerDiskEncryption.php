@@ -9,8 +9,6 @@ use spkm\Jamf\Data\Data;
  */
 readonly class ComputerDiskEncryption extends Data
 {
-    protected const HIDDEN = ['individualRecoveryKeyValidityStatus'];
-
     /**
      * @param  list<string>|null  $fileVault2EnabledUserNames
      * @param  array<string, mixed>  $extra  Fields Jamf sent that the model has no property for.

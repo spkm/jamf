@@ -12,8 +12,6 @@ readonly class GetEnrollmentCustomizationPanelLdapAuth extends Data
 {
     protected const LISTS = ['ldapGroupAccess' => EnrollmentCustomizationLdapGroupAccess::class];
 
-    protected const HIDDEN = ['passwordLabel'];
-
     /**
      * @param  Collection<int, EnrollmentCustomizationLdapGroupAccess>|null  $ldapGroupAccess
      * @param  array<string, mixed>  $extra  Fields Jamf sent that the model has no property for.

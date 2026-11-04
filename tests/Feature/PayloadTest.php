@@ -172,7 +172,7 @@ it('writes a query string as Jamf reads it', function () {
         'filter' => 'general.name=="a b"',
         'after' => CarbonImmutable::parse('2026-01-02T03:04:05+00:00'),
         'kind' => ExamplePayloadKind::Ipad,
-    ]))->toBe('section=GENERAL&section=HARDWARE&enabled=true&disabled=false&filter=general.name%3D%3D%22a%20b%22&after=2026-01-02T03%3A04%3A05%2B00%3A00&kind=iPad');
+    ]))->toBe('section=GENERAL&section=HARDWARE&enabled=true&disabled=false&filter=general.name%3D%3D%22a%20b%22&after=2026-01-02T03%3A04%3A05.000Z&kind=iPad');
 });
 
 it('writes a nested map in PHP\'s own form, as Jamf has no other', function () {

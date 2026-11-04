@@ -2,6 +2,7 @@
 
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
+use spkm\Jamf\Pro\Data\LapsUserPasswordResponseV2;
 use spkm\Jamf\Pro\Data\MobileDeviceHardware;
 use spkm\Jamf\Pro\Data\MobileDeviceIosGeneral;
 use spkm\Jamf\Pro\Data\MobileDeviceResponse;
@@ -84,11 +85,12 @@ it('reads dates as Jamf writes them and sends them back in ISO 8601 with millise
     expect($model->lastContact)->toBeInstanceOf(CarbonImmutable::class)
         ->and($model->toArray()['lastContact'])->toBe($expected);
 })->with([
-    'ISO 8601 with milliseconds' => ['2026-02-15T23:03:19.954Z', '2026-02-15T23:03:19.954+00:00'],
-    'ISO 8601 with an offset' => ['2026-02-15T23:03:19+01:00', '2026-02-15T23:03:19.000+01:00'],
-    'milliseconds' => [1771196599954, '2026-02-15T23:03:19.954+00:00'],
-    'seconds' => [1771196599, '2026-02-15T23:03:19.000+00:00'],
-    'seconds as text' => ['1771196599', '2026-02-15T23:03:19.000+00:00'],
+    'ISO 8601 with milliseconds' => ['2026-02-15T23:03:19.954Z', '2026-02-15T23:03:19.954Z'],
+    'ISO 8601 with nanoseconds' => ['2026-02-15T23:03:19.954123456Z', '2026-02-15T23:03:19.954Z'],
+    'ISO 8601 with an offset, sent back in UTC' => ['2026-02-15T23:03:19+01:00', '2026-02-15T22:03:19.000Z'],
+    'milliseconds' => [1771196599954, '2026-02-15T23:03:19.954Z'],
+    'seconds' => [1771196599, '2026-02-15T23:03:19.000Z'],
+    'seconds as text' => ['1771196599', '2026-02-15T23:03:19.000Z'],
 ]);
 
 it('reads no date from zero, an empty string, or something that is not a date', function (mixed $value) {
@@ -138,4 +140,12 @@ it('builds a generated model from a mobile device as Jamf sends it, with typed s
         ->and($device->general->assetTag)->toBe('CS1234')
         ->and($device->extensionAttributes)->toHaveCount(1)
         ->and($device->extra)->toBe(['futureSection' => ['x' => 1]]);
+});
+
+it('includes nested models\' secrets when asked for them, and only then', function () {
+    $model = LapsUserPasswordResponseV2::from(['lapsUserPasswordList' => [['username' => 'admin', 'password' => 'secret']]]);
+
+    expect($model->toArray())->toBe(['lapsUserPasswordList' => [['username' => 'admin']]])
+        ->and($model->toArray(true))->toBe(['lapsUserPasswordList' => [['username' => 'admin', 'password' => 'secret']]])
+        ->and(json_encode($model))->not->toContain('secret');
 });

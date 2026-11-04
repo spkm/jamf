@@ -5,7 +5,9 @@ namespace spkm\Jamf\Data;
 use BackedEnum;
 use Carbon\CarbonImmutable;
 use Carbon\Exceptions\InvalidFormatException;
+use DateTimeImmutable;
 use DateTimeInterface;
+use DateTimeZone;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use JsonSerializable;
@@ -34,10 +36,11 @@ abstract readonly class Data implements JsonSerializable
     protected const EXTRA = true;
 
     /**
-     * How dates are sent: an ISO 8601 date and time with milliseconds and an offset, as Jamf writes them; or 'Uv'
-     * and 'U' for Unix timestamps in milliseconds or seconds.
+     * How dates are sent: in UTC with milliseconds and a Z (2026-01-31T09:30:00.000Z), as Jamf writes them and
+     * reads them; or 'Uv' and 'U' for Unix timestamps in milliseconds or seconds. A date in another time zone is
+     * converted to UTC first.
      */
-    protected const DATE_FORMAT = DateTimeInterface::RFC3339_EXTENDED;
+    protected const DATE_FORMAT = 'Y-m-d\TH:i:s.v\Z';
 
     /**
      * The model class of each list property, keyed by property name.
@@ -129,7 +132,7 @@ abstract readonly class Data implements JsonSerializable
         $result = [];
 
         foreach ($values as $name => $value) {
-            $serialised = static::serialise($value);
+            $serialised = static::serialise($value, $withHidden);
 
             if ($serialised === null || ($serialised === [] && isset($emptyByDefault[$name]))) {
                 continue;
@@ -268,11 +271,11 @@ abstract readonly class Data implements JsonSerializable
         }
     }
 
-    protected static function serialise(mixed $value): mixed
+    protected static function serialise(mixed $value, bool $withHidden = false): mixed
     {
         return match (true) {
-            $value instanceof self => $value->toArray(),
-            $value instanceof Collection => $value->map(fn (mixed $item) => static::serialise($item))->values()->all(),
+            $value instanceof self => $value->toArray($withHidden),
+            $value instanceof Collection => $value->map(fn (mixed $item) => static::serialise($item, $withHidden))->values()->all(),
             $value instanceof DateTimeInterface => static::formatDate($value, static::DATE_FORMAT),
             $value instanceof BackedEnum => $value->value,
             default => $value,
@@ -287,7 +290,7 @@ abstract readonly class Data implements JsonSerializable
         return match ($format) {
             'Uv' => (int) $date->format('Uv'),
             'U' => (int) $date->format('U'),
-            default => $date->format($format),
+            default => DateTimeImmutable::createFromInterface($date)->setTimezone(new DateTimeZone('UTC'))->format($format),
         };
     }
 }

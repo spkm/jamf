@@ -9,8 +9,6 @@ use spkm\Jamf\Data\Data;
  */
 readonly class GetComputerPrestageV3 extends Data
 {
-    protected const HIDDEN = ['recoveryLockPasswordType'];
-
     /**
      * @param  array<string, mixed>|null  $skipSetupItems
      * @param  list<string>|null  $anchorCertificates

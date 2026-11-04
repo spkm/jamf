@@ -3,7 +3,9 @@
 namespace spkm\Jamf\Query;
 
 use BackedEnum;
+use DateTimeImmutable;
 use DateTimeInterface;
+use DateTimeZone;
 use InvalidArgumentException;
 use Stringable;
 
@@ -103,8 +105,9 @@ final class Filter implements Stringable
     }
 
     /**
-     * A value as RSQL takes it: a number or boolean as it is, a date in ISO 8601, and anything else in double quotes
-     * with quotes and backslashes escaped. A * in a quoted value is a wildcard.
+     * A value as RSQL takes it: a number or boolean as it is, a date in UTC as Jamf compares them
+     * (2026-01-31T09:30:00.000Z), and anything else in double quotes with quotes and backslashes escaped. A * in a
+     * quoted value is a wildcard.
      */
     public static function value(mixed $value): string
     {
@@ -112,10 +115,18 @@ final class Filter implements Stringable
             is_int($value), is_float($value) => (string) $value,
             is_bool($value) => $value ? 'true' : 'false',
             $value instanceof BackedEnum => self::value($value->value),
-            $value instanceof DateTimeInterface => '"'.$value->format('Y-m-d\TH:i:sP').'"',
+            $value instanceof DateTimeInterface => '"'.self::date($value).'"',
             is_string($value), $value instanceof Stringable => '"'.addcslashes((string) $value, '"\\').'"',
             default => throw new InvalidArgumentException('A '.get_debug_type($value).' cannot be compared in a Jamf filter.'),
         };
+    }
+
+    /**
+     * A date as Jamf reads one: in UTC, with milliseconds and a Z. Jamf refuses an offset such as +00:00.
+     */
+    public static function date(DateTimeInterface $date): string
+    {
+        return DateTimeImmutable::createFromInterface($date)->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\TH:i:s.v\Z');
     }
 
     /**

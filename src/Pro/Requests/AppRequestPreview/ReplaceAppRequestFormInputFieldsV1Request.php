@@ -20,6 +20,8 @@ class ReplaceAppRequestFormInputFieldsV1Request extends WriteRequest
 
     protected ?string $dto = AppRequestFormInputField::class;
 
+    protected bool $listBody = true;
+
     /**
      * @param  array<mixed>|JsonSerializable  $body  The record, as an array of Jamf's field names or a model.
      * @param  array<string, mixed>  $options  Query options.

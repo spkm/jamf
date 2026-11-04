@@ -4,11 +4,12 @@ namespace spkm\Jamf\Support;
 
 use BackedEnum;
 use DateTimeInterface;
+use spkm\Jamf\Query\Filter;
 use Stringable;
 
 /**
  * Writes a query string the way Jamf reads one: a parameter with several values is repeated
- * (section=GENERAL&section=HARDWARE), a boolean is true or false, a date is ISO 8601, and anything else is a plain
+ * (section=GENERAL&section=HARDWARE), a boolean is true or false, a date is in UTC with a Z (as Jamf reads one), and anything else is a plain
  * key=value pair.
  */
 final class QueryString
@@ -77,7 +78,7 @@ final class QueryString
             $value === null => [],
             is_bool($value) => [$value ? 'true' : 'false'],
             $value instanceof BackedEnum => [(string) $value->value],
-            $value instanceof DateTimeInterface => [$value->format('Y-m-d\\TH:i:sP')],
+            $value instanceof DateTimeInterface => [Filter::date($value)],
             $value instanceof Stringable, is_scalar($value) => [(string) $value],
             default => [],
         };
